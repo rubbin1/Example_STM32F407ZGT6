@@ -24,7 +24,7 @@
 ├── cmake/              # CMake 工具链文件
 ├── Docs/               # 开发板文档 (不纳入版本管理)
 ├── CMakeLists.txt      # 顶层构建文件
-└── daplink.cfg         # OpenOCD DAPLink 配置
+└── daplink.cfg         # OpenOCD DAPLink 配置（如有需要可使用，我是直接用clion的Stlink调试服务器烧录的）
 ```
 
 ## 已封装模块
