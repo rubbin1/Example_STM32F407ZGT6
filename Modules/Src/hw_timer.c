@@ -4,6 +4,7 @@
 
 #include "hw_timer.h"
 #include "main.h"
+#include "tim.h"
 
 HW_TIMER hwtim6 = {
     .htim = &htim6,

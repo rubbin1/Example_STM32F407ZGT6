@@ -195,6 +195,76 @@ HwTimer_Stop(&hwtim6);
 | `HwTimer_Reset(t)` | 清零计数器 |
 | `HwTimer_GetCount(t)` | 读取当前计数值 |
 
+### OLED — 0.96寸显示屏
+
+ATK-MD0096 0.96" OLED 显示屏 (SSD1306)，8080 并行接口，128×64 分辨率。内部维护 1 KB 帧缓存 (`g_gram[8][128]`)，所有绘制操作先写入缓存，调用 `OLED_Update()` 后整屏刷新。
+
+```c
+OLED_Init();
+OLED_ShowString(0, 0, "Hello", 16);
+OLED_Update();
+```
+
+**API**
+
+| 函数 | 说明 |
+|------|------|
+| `OLED_Init()` | 硬件复位 + SSD1306 寄存器初始化，清屏 |
+| `OLED_Clear()` | 帧缓存清零（不刷新到屏幕） |
+| `OLED_Update()` | 将帧缓存全量写入 SSD1306 |
+| `OLED_DrawPoint(x, y, dot)` | 绘制 / 擦除一个点 |
+| `OLED_ShowChar(x, y, ch, size)` | 显示一个字符，`size` = 8/12/16 |
+| `OLED_ShowString(x, y, str, size)` | 显示字符串，自动换行 |
+| `OLED_ShowNum(x, y, num, len, size)` | 显示数字（高位补空格） |
+| `OLED_DrawLine(x1, y1, x2, y2)` | Bresenham 直线 |
+| `OLED_DrawRect(x, y, w, h)` | 空心矩形 |
+| `OLED_DrawFillRect(x, y, w, h)` | 实心矩形 |
+| `OLED_DrawCircle(x, y, r)` | 空心圆 |
+| `OLED_DrawFillCircle(x, y, r)` | 实心圆 |
+
+**例1：基本文字显示**
+
+```c
+OLED_Init();
+
+OLED_ShowString(0, 0,  "STM32F407", 16);   // 8×16 字体
+OLED_ShowString(0, 16, "OLED Demo", 12);    // 6×12 字体
+OLED_ShowNum(0, 32, 12345, 5, 16);          // 显示 "12345"
+OLED_Update();
+```
+
+**例2：传感器数值实时刷新**
+
+```c
+OLED_Init();
+ADC_Init(&adc1_ch5);
+
+while (1) {
+    uint16_t mv = ADC_ReadVoltage(&adc1_ch5);
+
+    OLED_Clear();
+    OLED_ShowString(0, 0,  "ADC Voltage", 12);
+    OLED_ShowNum(0, 20, mv, 4, 16);          // 显示 mV
+    OLED_ShowString(30, 20, "mV", 12);
+    OLED_Update();
+
+    HAL_Delay(500);
+}
+```
+
+**例3：简单图形**
+
+```c
+OLED_Init();
+
+OLED_DrawRect(10, 10, 50, 30);               // 空心矩形
+OLED_DrawFillRect(70, 10, 30, 30);            // 实心矩形
+OLED_DrawCircle(30, 50, 15);                  // 空心圆
+OLED_DrawFillCircle(90, 50, 10);              // 实心圆
+OLED_DrawLine(0, 0, 127, 63);                 // 对角线
+OLED_Update();
+```
+
 ## 引脚分配
 
 | 功能 | 引脚 | 说明 |

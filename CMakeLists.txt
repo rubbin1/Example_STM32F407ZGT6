@@ -50,7 +50,10 @@ add_executable(${CMAKE_PROJECT_NAME}
         Modules/Src/adc_sensor.c
         Modules/Inc/adc_sensor.h
         Modules/Src/hw_timer.c
-        Modules/Inc/hw_timer.h)
+        Modules/Inc/hw_timer.h
+        Modules/Src/oled.c
+        Modules/Inc/oled.h
+        Modules/Inc/oled_font.h)
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)

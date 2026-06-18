@@ -63,6 +63,10 @@ void Error_Handler(void);
 #define KEY1_GPIO_Port GPIOE
 #define KEY0_Pin GPIO_PIN_4
 #define KEY0_GPIO_Port GPIOE
+#define OLED_D6_Pin GPIO_PIN_5
+#define OLED_D6_GPIO_Port GPIOE
+#define OLED_D7_Pin GPIO_PIN_6
+#define OLED_D7_GPIO_Port GPIOE
 #define LIGHT_SENSOR_Pin GPIO_PIN_7
 #define LIGHT_SENSOR_GPIO_Port GPIOF
 #define BUZZER_Pin GPIO_PIN_8
@@ -73,8 +77,30 @@ void Error_Handler(void);
 #define LED1_GPIO_Port GPIOF
 #define KEY_UP_Pin GPIO_PIN_0
 #define KEY_UP_GPIO_Port GPIOA
+#define OLED_RW_Pin GPIO_PIN_4
+#define OLED_RW_GPIO_Port GPIOA
 #define TOUCH_KEY_Pin GPIO_PIN_5
 #define TOUCH_KEY_GPIO_Port GPIOA
+#define OLED_D0_Pin GPIO_PIN_6
+#define OLED_D0_GPIO_Port GPIOC
+#define OLED_D1_Pin GPIO_PIN_7
+#define OLED_D1_GPIO_Port GPIOC
+#define OLED_D2_Pin GPIO_PIN_8
+#define OLED_D2_GPIO_Port GPIOC
+#define OLED_D3_Pin GPIO_PIN_9
+#define OLED_D3_GPIO_Port GPIOC
+#define OLED_D4_Pin GPIO_PIN_11
+#define OLED_D4_GPIO_Port GPIOC
+#define OLED_DC_Pin GPIO_PIN_6
+#define OLED_DC_GPIO_Port GPIOD
+#define OLED_RD_Pin GPIO_PIN_7
+#define OLED_RD_GPIO_Port GPIOD
+#define OLED_RST_Pin GPIO_PIN_15
+#define OLED_RST_GPIO_Port GPIOG
+#define OLED_D5_Pin GPIO_PIN_6
+#define OLED_D5_GPIO_Port GPIOB
+#define OLED_CS_Pin GPIO_PIN_7
+#define OLED_CS_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

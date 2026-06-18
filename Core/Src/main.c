@@ -26,6 +26,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "led.h"
+#include "oled.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -94,15 +95,17 @@ int main(void)
   MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
   Leds_Init();
-  Led_Flow_Init(500);
-  Led_Flow_On();
+  OLED_Init();
+  HAL_Delay(50);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    Led_Flow();
+    OLED_ShowString(0, 0, "Show you a circle...", 12);
+    OLED_DrawCircle(64, 32, 10);
+    OLED_Update();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
