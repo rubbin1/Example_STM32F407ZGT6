@@ -29,7 +29,7 @@
 
 ## 已封装模块
 
-所有模块以结构体封装外设状态，函数接收结构体指针操作，依赖 `soft_timer` 模块提供定时能力。
+所有模块以结构体封装外设状态，函数接收结构体指针操作。除 `hw_timer` 外，其余模块均依赖 `soft_timer` 提供定时能力。
 
 ### SoftTimer — 软件定时器
 
@@ -64,6 +64,7 @@ while (1) Led_Flow();
 | `Led_On/Off/Toggle(led)` | 单灯控制 |
 | `Led_OnAll/OffAll/ToggleAll()` | 全局控制 |
 | `Led_Flow_Init(ms)` | 初始化流水灯 |
+| `Led_Flow_On/Off()` | 开启 / 关闭流水灯 |
 | `Led_Flow()` | 流水灯状态机（需周期性调用） |
 
 ### Buzzer — 蜂鸣器
@@ -146,6 +147,53 @@ if (Serial_Available(&serial1)) {
 | `Serial_Println(s, str)` | 发送字符串 + 换行 |
 | `Serial_Available(s)` | 可读字节数 |
 | `Serial_ReadByte(s)` | 读取一个字节 |
+
+### ADC — 模拟采集
+
+ADC1 单通道采集封装，支持原始值、电压值和滑动平均。12 位分辨率，3.3V 参考电压。全局实例：`adc1_ch5` (绑定 `hadc1`, ADC_CHANNEL_5 / PA5)。
+
+```c
+ADC_Init(&adc1_ch5);
+
+uint16_t raw = ADC_ReadRaw(&adc1_ch5);          // 0~4095
+uint16_t mv  = ADC_ReadVoltage(&adc1_ch5);      // 0~3300 mV
+uint16_t avg = ADC_ReadAvg(&adc1_ch5, 10);      // 10次采样平均
+```
+
+| 函数 | 说明 |
+|------|------|
+| `ADC_Init(ch)` | 初始化，读取首值填入 raw/voltage_mv/avg_raw |
+| `ADC_ReadRaw(ch)` | 单次采集，返回原始值 0~4095 |
+| `ADC_ReadVoltage(ch)` | 单次采集，返回电压值 (mV) |
+| `ADC_ReadAvg(ch, times)` | 采集 times 次，返回平均原始值 |
+
+### HW_Timer — 硬件定时器
+
+基于 TIM6 的硬件微秒级定时器，用于精确延时和计时。TIM6 挂载 APB1 (42 MHz ×2 = 84 MHz 定时器时钟)，预分频 168-1 → 计数频率 500 kHz (每 tick = 2 μs)，周期 1000-1。
+
+```c
+HwTimer_Init(&hwtim6);
+
+HwTimer_DelayUs(&hwtim6, 50);   // 阻塞延时 50μs
+HwTimer_DelayMs(&hwtim6, 10);   // 阻塞延时 10ms
+
+// 用于自定义超时控制
+HwTimer_Reset(&hwtim6);
+HwTimer_Start(&hwtim6);
+// ... 等待某事件 ...
+if (HwTimer_GetCount(&hwtim6) > 5000) { /* 超时 */ }
+HwTimer_Stop(&hwtim6);
+```
+
+| 函数 | 说明 |
+|------|------|
+| `HwTimer_Init(t)` | 根据 APB1 时钟和预分频计算实际 freq_hz |
+| `HwTimer_DelayUs(t, us)` | 阻塞延时微秒（16 位计数，单次最长 ~131ms） |
+| `HwTimer_DelayMs(t, ms)` | 阻塞延时毫秒 |
+| `HwTimer_Start(t)` | 启动计数器 |
+| `HwTimer_Stop(t)` | 停止计数器 |
+| `HwTimer_Reset(t)` | 清零计数器 |
+| `HwTimer_GetCount(t)` | 读取当前计数值 |
 
 ## 引脚分配
 
