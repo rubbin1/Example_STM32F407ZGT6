@@ -76,6 +76,17 @@ void Led_Flow_Init(int time_interval)
     led_flow.flag = LED_NO_FLOWING;
 }
 
+void Led_Flow_On(void)
+{
+    led_flow.flag = LED_FLOWING;
+}
+
+void Led_Flow_Off(void)
+{
+    led_flow.flag = LED_NO_FLOWING;
+    Led_OffAll();
+}
+
 void Led_Flow(void)
 {
     static uint8_t current_index = 0;

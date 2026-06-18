@@ -19,14 +19,13 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "adc.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "led.h"
-#include "light_sensor.h"
-#include "serial.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -92,35 +91,18 @@ int main(void)
   MX_GPIO_Init();
   MX_ADC1_Init();
   MX_USART1_UART_Init();
+  MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
   Leds_Init();
-  LightSensor_Init(&light_sensor);
-  Serial_Init(&serial1);
-
+  Led_Flow_Init(500);
+  Led_Flow_On();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    static uint8_t light_flag = 0;
-
-    LightSensor_Scan(&light_sensor);
-
-    if (LightSensor_IsDark(&light_sensor)){
-      Led_On(&led1);
-      if (light_flag == 1){
-        Serial_SendString(&serial1, "Light is Dark\n");
-        light_flag = 0;
-      }
-    }
-    else{
-      Led_Off(&led1);
-      if (light_flag == 0){
-        Serial_SendString(&serial1, "Light is On\n");
-        light_flag = 1;
-      }
-    }
+    Led_Flow();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

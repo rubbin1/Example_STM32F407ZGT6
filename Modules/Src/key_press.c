@@ -73,3 +73,19 @@ void Key_Scan(Key_TypeDef *key)
         key->current_state = 0;
     }
 }
+
+uint8_t Key_IsShortPress(Key_TypeDef *key)
+{
+    return key->event == KEY_EVENT_SHORT;
+}
+
+uint8_t Key_IsLongPress(Key_TypeDef *key)
+{
+    return key->event == KEY_EVENT_LONG;
+}
+
+uint8_t Key_IsRepeat(Key_TypeDef *key)
+{
+    return key->event == KEY_EVENT_REPEAT;
+}
+

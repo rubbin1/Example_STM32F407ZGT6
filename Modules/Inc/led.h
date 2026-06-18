@@ -46,6 +46,8 @@ typedef struct
 extern LED_FLOW led_flow;
 //流水灯初始化函数
 void Led_Flow_Init(int time_interval);
+void Led_Flow_On(void);
+void Led_Flow_Off(void);
 void Led_Flow(void);
 
 #endif //EXAMPLE_LED_H

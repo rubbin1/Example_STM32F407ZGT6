@@ -34,4 +34,9 @@ extern const uint8_t KEY_COUNT;
 
 void Key_Scan(Key_TypeDef *key);
 
+/* 事件查询：在 Key_Scan 之后调用 */
+uint8_t Key_IsShortPress(Key_TypeDef *key);
+uint8_t Key_IsLongPress(Key_TypeDef *key);
+uint8_t Key_IsRepeat(Key_TypeDef *key);
+
 #endif //KEY_PRESS_H

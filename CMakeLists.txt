@@ -46,7 +46,11 @@ add_executable(${CMAKE_PROJECT_NAME}
         Modules/Src/touch_pad.c
         Modules/Inc/touch_pad.h
         Modules/Src/serial.c
-        Modules/Inc/serial.h)
+        Modules/Inc/serial.h
+        Modules/Src/adc_sensor.c
+        Modules/Inc/adc_sensor.h
+        Modules/Src/hw_timer.c
+        Modules/Inc/hw_timer.h)
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
