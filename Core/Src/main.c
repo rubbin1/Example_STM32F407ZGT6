@@ -22,11 +22,16 @@
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include "fsmc.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdio.h>
+
 #include "led.h"
-#include "oled.h"
+#include "tft_lcd.h"
+#include "tft_lcd_touch.h"
+#include "app_lcd.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -93,19 +98,22 @@ int main(void)
   MX_ADC1_Init();
   MX_USART1_UART_Init();
   MX_TIM6_Init();
+  MX_FSMC_Init();
   /* USER CODE BEGIN 2 */
   Leds_Init();
-  OLED_Init();
-  HAL_Delay(50);
+  TFTLCD_Init();
+  Touch_Init();
+  Led_Flow_Init(500);
+
+  App_LCD_Init();       // 画界面
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    OLED_ShowString(0, 0, "Show you a circle...", 12);
-    OLED_DrawCircle(64, 32, 10);
-    OLED_Update();
+    App_LCD_Loop();     // 触摸处理
+    Led_Flow();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

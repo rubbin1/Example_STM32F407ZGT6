@@ -67,6 +67,8 @@ void Error_Handler(void);
 #define OLED_D6_GPIO_Port GPIOE
 #define OLED_D7_Pin GPIO_PIN_6
 #define OLED_D7_GPIO_Port GPIOE
+#define T_CS_Pin GPIO_PIN_13
+#define T_CS_GPIO_Port GPIOC
 #define LIGHT_SENSOR_Pin GPIO_PIN_7
 #define LIGHT_SENSOR_GPIO_Port GPIOF
 #define BUZZER_Pin GPIO_PIN_8
@@ -81,6 +83,16 @@ void Error_Handler(void);
 #define OLED_RW_GPIO_Port GPIOA
 #define TOUCH_KEY_Pin GPIO_PIN_5
 #define TOUCH_KEY_GPIO_Port GPIOA
+#define T_SCLK_Pin GPIO_PIN_0
+#define T_SCLK_GPIO_Port GPIOB
+#define T_PEN_Pin GPIO_PIN_1
+#define T_PEN_GPIO_Port GPIOB
+#define T_MISO_Pin GPIO_PIN_2
+#define T_MISO_GPIO_Port GPIOB
+#define T_MOSI_Pin GPIO_PIN_11
+#define T_MOSI_GPIO_Port GPIOF
+#define LCD_BL_Pin GPIO_PIN_15
+#define LCD_BL_GPIO_Port GPIOB
 #define OLED_D0_Pin GPIO_PIN_6
 #define OLED_D0_GPIO_Port GPIOC
 #define OLED_D1_Pin GPIO_PIN_7

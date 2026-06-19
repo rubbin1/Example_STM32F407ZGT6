@@ -15,16 +15,22 @@
 
 ```
 ├── Core/               # CubeMX 生成的 HAL 初始化代码
-│   ├── Inc/            # 头文件 (main.h, gpio.h, adc.h, usart.h, ...)
-│   └── Src/            # 源文件 (main.c, gpio.c, adc.c, usart.c, ...)
+│   ├── Inc/            # 头文件 (main.h, gpio.h, adc.h, usart.h, fsmc.h, ...)
+│   └── Src/            # 源文件 (main.c, gpio.c, adc.c, usart.c, fsmc.c, ...)
 ├── Drivers/            # CMSIS + STM32F4xx HAL 驱动库
-├── Modules/            # 自定义模块封装
+├── Modules/            # 自定义模块封装（外设驱动层）
 │   ├── Inc/            # 模块头文件
 │   └── Src/            # 模块源文件
-├── cmake/              # CMake 工具链文件
+├── GUI/                # GUI 组件（按钮、复选框、滑块）
+│   ├── Inc/            # GUI 头文件
+│   └── Scr/            # GUI 源文件
+├── Functions/          # 应用示例
+│   ├── Inc/            # 应用头文件
+│   └── Scr/            # 应用源文件
+├── cmake/              # CMake 工具链文件 (含 stm32cubemx 子目录)
 ├── Docs/               # 开发板文档 (不纳入版本管理)
 ├── CMakeLists.txt      # 顶层构建文件
-└── daplink.cfg         # OpenOCD DAPLink 配置（如有需要可使用，我是直接用clion的Stlink调试服务器烧录的）
+└── daplink.cfg         # OpenOCD DAPLink 配置
 ```
 
 ## 已封装模块
@@ -264,6 +270,132 @@ OLED_DrawFillCircle(90, 50, 10);              // 实心圆
 OLED_DrawLine(0, 0, 127, 63);                 // 对角线
 OLED_Update();
 ```
+
+### TFT LCD — 彩色液晶屏
+
+FSMC 驱动的 MCU 屏，支持 ILI9341 / ST7789 / ST7796 / NT35310 / NT35510 / ILI9806 / SSD1963 多种驱动 IC，通过读取 ID 自动适配。含内置 6×8 英文 ASCII 字库，支持 2×、3× 整数缩放，文字绘制自动用 `tft_bg_color` 填充背景。全局实例：`tftlcd`。
+
+```c
+TFTLCD_Init();                           // 自动检测 IC，适配分辨率
+TFTLCD_Clear(TFT_BLACK);                // 全屏填充
+
+TFTLCD_ShowString(0, 0, "Hello TFT", 16, TFT_WHITE);
+TFTLCD_Printf(0, 40, 12, TFT_YELLOW, "ADC: %d mV", adc_val);
+TFTLCD_BackLight(1);                     // 背光开关
+```
+
+| 函数 | 说明 |
+|------|------|
+| `TFTLCD_Init()` | 自动检测驱动 IC，适配分辨率，默认竖屏 |
+| `TFTLCD_Clear(color)` | 全屏填充单色 |
+| `TFTLCD_DisplayDir(dir)` | 切换显示方向 (0=竖屏, 1=横屏) |
+| `TFTLCD_SetCursor(x, y)` | 设置光标位置 |
+| `TFTLCD_SetWindow(xs, ys, xe, ye)` | 设置填充窗口 |
+| `TFTLCD_DrawPoint(x, y, color)` | 画点 |
+| `TFTLCD_Fill(xs, ys, xe, ye, color)` | 矩形填充 |
+| `TFTLCD_DrawLine(x1, y1, x2, y2, color)` | Bresenham 直线 |
+| `TFTLCD_DrawRect(x, y, w, h, color)` | 空心矩形 |
+| `TFTLCD_DrawFillRect(x, y, w, h, color)` | 实心矩形 |
+| `TFTLCD_DrawCircle(cx, cy, r, color)` | 空心圆 |
+| `TFTLCD_DrawFillCircle(cx, cy, r, color)` | 实心圆 |
+| `TFTLCD_ShowChar(x, y, ch, size, color)` | 字符 (size: 8/12/16，整数缩放) |
+| `TFTLCD_ShowString(x, y, str, size, color)` | 字符串，自动换行 |
+| `TFTLCD_ShowNum(x, y, num, len, size, color)` | 数字（高位补空格） |
+| `TFTLCD_Printf(x, y, size, color, fmt, ...)` | 格式化打印（底层 `vsnprintf`） |
+| `TFTLCD_BackLight(on)` | 背光开关（PB15，1=开） |
+| `TFTLCD_SetBackColor(bg)` | 设置全局背景色并清屏 |
+
+**RGB565 预定义颜色**
+
+`TFT_WHITE`, `TFT_BLACK`, `TFT_RED`, `TFT_GREEN`, `TFT_BLUE`, `TFT_YELLOW`, `TFT_CYAN`, `TFT_MAGENTA`, `TFT_GRAY`, `TFT_ORANGE`, `TFT_PURPLE`, `TFT_DARKBLUE`, `TFT_LIGHTBLUE`, `TFT_LIGHTGREEN`, `TFT_BROWN`
+
+### TFT Touch — 电阻触摸
+
+XPT2046 触摸控制器，软件 SPI 通信。PEN 中断检测触摸状态，5 次采样取平均，四点 Y 分段 + 线性 X 校准。全局实例：`touch`。
+
+```c
+Touch_Init();
+
+while (1) {
+    if (Touch_Scan()) {                  // 返回 1 表示检测到触摸
+        uint16_t x, y;
+        Touch_GetXY(&x, &y);             // 获取校准后的 LCD 坐标
+        // x,y 已经映射到 LCD 分辨率
+    }
+    if (Touch_IsPressed()) { /* 正在触摸中 */ }
+}
+```
+
+| 函数 | 说明 |
+|------|------|
+| `Touch_Init()` | 初始化，清零状态 |
+| `Touch_Scan()` | 扫描一次，返回 1=检测到新的触摸数据 |
+| `Touch_GetXY(x, y)` | 获取校准后的坐标（已映射到 LCD 分辨率） |
+| `Touch_IsPressed()` | 当前是否正在触摸 |
+
+### GUI — 触屏控件
+
+基于 TFT LCD + Touch 的轻量 GUI 组件，包含按钮、复选框、水平滑块。所有控件由触摸坐标驱动，在 `Touch_Scan()` 检测到触摸后分发事件。
+
+**Button — 按钮**
+
+3D 边框效果，触摸按下/松开切换视觉凹陷。
+
+```c
+Button btn = {
+    .x = 20, .y = 60, .w = 120, .h = 40,
+    .text = "LED0", .color = TFT_WHITE, .bg_color = TFT_BLUE,
+    .on_click = on_led0_click,
+};
+Button_Draw(&btn);
+// 在触摸扫描循环中:
+if (Touch_Scan()) { Touch_GetXY(&x, &y); Button_Check(&btn, x, y); }
+```
+
+| 函数 | 说明 |
+|------|------|
+| `Button_Draw(btn)` | 绘制按钮（含 3D 边框） |
+| `Button_Check(btn, tx, ty)` | 检测触摸坐标，命中时自动绘制凹陷效果并回调 `on_click` |
+
+**CheckBox — 复选框**
+
+20×20 方框 + 右侧文字，点击切换选中/取消状态。
+
+```c
+CheckBox cb = {
+    .x = 20, .y = 120, .text = "Flow LED",
+    .color = TFT_WHITE, .bg_color = TFT_BLACK,
+    .on_change = on_flow_change,       // 回调参数: checked (0/1)
+};
+CheckBox_Draw(&cb);
+// 触摸分发: CheckBox_Check(&cb, x, y);
+```
+
+| 函数 | 说明 |
+|------|------|
+| `CheckBox_Draw(cb)` | 绘制复选框 |
+| `CheckBox_Check(cb, tx, ty)` | 检测触摸，命中时翻转状态并回调 `on_change(checked)` |
+| `CheckBox_SetChecked(cb, val)` | 外部设置选中状态并重绘 |
+
+**Slider — 滑块**
+
+0~100 水平滑块，触摸拖动实时更新。
+
+```c
+Slider s = {
+    .x = 20, .y = 160, .w = 200,
+    .color = TFT_RED, .bg_color = TFT_GRAY,
+    .on_change = on_brightness_change,  // 回调参数: value (0~100)
+};
+Slider_Draw(&s);
+// 触摸分发: Slider_Check(&s, x, y);
+```
+
+| 函数 | 说明 |
+|------|------|
+| `Slider_Draw(s)` | 绘制滑块（滑槽 + 填充条 + 圆钮） |
+| `Slider_Check(s, tx, ty)` | 检测触摸拖动，更新 value 并回调 `on_change(value)` |
+| `Slider_SetValue(s, val)` | 外部设置值 (0~100) 并重绘 |
 
 ## 引脚分配
 

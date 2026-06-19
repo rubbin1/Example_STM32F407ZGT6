@@ -53,7 +53,15 @@ add_executable(${CMAKE_PROJECT_NAME}
         Modules/Inc/hw_timer.h
         Modules/Src/oled.c
         Modules/Inc/oled.h
-        Modules/Inc/oled_font.h)
+        Modules/Inc/oled_font.h
+        Modules/Src/tft_lcd.c
+        Modules/Inc/tft_lcd.h
+        Modules/Src/tft_lcd_touch.c
+        Modules/Inc/tft_lcd_touch.h
+        GUI/Scr/gui_button.c
+        GUI/Inc/gui_button.h
+        Functions/Scr/app_lcd.c
+        Functions/Inc/app_lcd.h)
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
@@ -72,6 +80,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     Modules/Inc
+        GUI/Inc
+    Functions/Inc
 )
 
 # Add project symbols (macros)
