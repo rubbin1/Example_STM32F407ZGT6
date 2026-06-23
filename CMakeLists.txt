@@ -63,7 +63,9 @@ add_executable(${CMAKE_PROJECT_NAME}
         Functions/Scr/app_lcd.c
         Functions/Inc/app_lcd.h
         Modules/Src/servo_180.c
-        Modules/Inc/servo_180.h)
+        Modules/Inc/servo_180.h
+        Modules/Src/protocol.c
+        Modules/Inc/protocol.h)
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
