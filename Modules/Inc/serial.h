@@ -17,6 +17,7 @@ typedef struct {
 } Serial_t;
 
 extern Serial_t serial1;
+extern Serial_t serial3;
 
 void Serial_Init(Serial_t *s);
 void Serial_SendByte(Serial_t *s, uint8_t byte);

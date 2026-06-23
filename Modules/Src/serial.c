@@ -10,6 +10,10 @@ Serial_t serial1 = {
     .huart = &huart1,
 };
 
+Serial_t serial3 = {
+    .huart = &huart3,
+};
+
 void Serial_Init(Serial_t *s)
 {
     s->rx_head = 0;
@@ -72,16 +76,21 @@ uint8_t Serial_ReadByte(Serial_t *s)
     return byte;
 }
 
+static Serial_t *serial_by_huart(UART_HandleTypeDef *huart)
+{
+    if (huart == &huart1) return &serial1;
+    if (huart == &huart3) return &serial3;
+    return NULL;
+}
+
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-    if (huart->Instance != USART1) return;
-
-    Serial_t *s = &serial1;
+    Serial_t *s = serial_by_huart(huart);
+    if (!s) return;
 
     uint16_t next = (s->rx_head + 1) % SERIAL_RX_BUF_SIZE;
     if (next != s->rx_tail) {
         s->rx_head = next;
     }
-    /* 重新启动下一字节的接收 */
     HAL_UART_Receive_IT(huart, &s->rx_buf[s->rx_head], 1);
 }
