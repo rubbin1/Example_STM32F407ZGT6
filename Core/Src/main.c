@@ -28,15 +28,18 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 
+#include "key_press.h"
 #include "led.h"
-#include "tft_lcd.h"
-#include "tft_lcd_touch.h"
-#include "app_lcd.h"
+#include "oled.h"
+#include "servo_180.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+Servo servo_0 = {
+  .pin = GPIO_PIN_1,
+  .port = GPIOA,
+};
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -99,21 +102,58 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM6_Init();
   MX_FSMC_Init();
+  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
   Leds_Init();
-  TFTLCD_Init();
-  Touch_Init();
   Led_Flow_Init(500);
 
-  App_LCD_Init();       // 画界面
+  Led_Flow_On();
+
+  uint8_t angle = 0;
+  Servo_Init(&servo_0);
+  Servo_SetAngle(&servo_0, angle);
+
+  OLED_Init();
+  HAL_Delay(20);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    App_LCD_Loop();     // 触摸处理
     Led_Flow();
+
+    for (uint8_t i = 0; i < KEY_COUNT; i++){
+      Key_Scan(key_map[i]);
+    }
+
+    if (Key_IsShortPress(&key0)){
+      angle += 20;
+      if (angle > 180) angle = 0;
+    }
+    if (Key_IsShortPress(&key1)){
+      if (angle > 180) angle = 180;
+      else if (angle >= 20) angle -= 20;
+      else angle = 180;
+    }
+    if (Key_IsLongPress(&key0) || Key_IsRepeat(&key0)){
+      angle += 10;
+      if (angle > 180) angle = 0;
+    }
+    if (Key_IsLongPress(&key1) || Key_IsRepeat(&key1)){
+      if (angle > 180) angle = 180;
+      else if (angle >= 10) angle -= 10;
+      else angle = 180;
+    }
+
+    Servo_SetAngle(&servo_0, angle);
+    char ch1[32];
+    sprintf(ch1,"Servo angle = %d",angle);
+    OLED_Clear();
+    OLED_ShowString(0, 0, ch1, 8);
+    OLED_Update();
+
+    Servo_Update(&servo_0);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

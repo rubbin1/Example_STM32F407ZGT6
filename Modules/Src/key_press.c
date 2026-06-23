@@ -5,7 +5,7 @@
 #include "key_press.h"
 
 #define DEBOUNCE_MS    20
-#define LONG_PRESS_MS  500
+#define LONG_PRESS_MS  800
 #define REPEAT_MS      200
 
 Key_TypeDef key0 = {
