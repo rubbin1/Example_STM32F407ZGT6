@@ -92,6 +92,7 @@ void Led_Flow(void)
     static uint8_t current_index = 0;
 
     if (led_flow.flag != LED_FLOWING) {
+        Led_OffAll();
         return;
     }
 
