@@ -28,12 +28,11 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <string.h>
-#include "serial.h"
-#include "w25qxx.h"
-#include "tft_lcd.h"
-#include "font_flash.h"
+#include <stdio.h>
 #include "led.h"
+#include "dht11.h"
+#include "font_flash.h"
+#include "tft_lcd.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -106,24 +105,31 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   Leds_Init();
+
+  DHT11_Init(&dht11);
+
   TFTLCD_Init();
   TFTLCD_BackLight(1);
   TFTLCD_Clear(TFT_BLACK);
-  W25QXX_Init(&w25q128);
 
-  Serial_Init(&serial1);
+  uint8_t humidity = 0, temperature = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    FontFlash_RecvProc(&serial1);
+    FontFlash_ShowString_UTF8(0, 0,  "温湿度传感器测试", 24, TFT_WHITE);
 
-    TFTLCD_ShowString(0, 30, "OK!", 16, TFT_CYAN);
-    FontFlash_ShowString_UTF8(0, 90,  "这样的说是", 16, TFT_CYAN);
-    FontFlash_ShowString_UTF8(0, 150, "这样的说是", 24,  TFT_GREEN);
-
+    if (DHT11_Read(&dht11)){
+      humidity = dht11.humidity;
+      temperature = dht11.temperature;
+    }
+    char ch1[32] = {0}, ch2[32] = {0};
+    sprintf(ch1, "humidity = %d", humidity);
+    sprintf(ch2, "temperature = %d", temperature);
+    TFTLCD_ShowString(0, 40, ch1, 24, TFT_CYAN);
+    TFTLCD_ShowString(0, 80, ch2, 24, TFT_CYAN);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

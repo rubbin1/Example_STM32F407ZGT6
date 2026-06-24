@@ -8,3 +8,8 @@
 /.idea/vcs.xml
 /Docs/
 /.idea/encodings.xml
+/.idea/.name
+/Tools/output/gbk_16_uni_map.bin
+/Tools/output/gbk_16x16.bin
+/Tools/output/gbk_24_uni_map.bin
+/Tools/output/gbk_24x24.bin
