@@ -28,11 +28,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdio.h>
 #include "led.h"
-#include "dht11.h"
-#include "font_flash.h"
 #include "tft_lcd.h"
+#include "page_manager.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -106,30 +104,18 @@ int main(void)
   /* USER CODE BEGIN 2 */
   Leds_Init();
 
-  DHT11_Init(&dht11);
-
   TFTLCD_Init();
   TFTLCD_BackLight(1);
-  TFTLCD_Clear(TFT_BLACK);
 
-  uint8_t humidity = 0, temperature = 0;
+  Touch_Init();
+  PageManager_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    FontFlash_ShowString_UTF8(0, 0,  "温湿度传感器测试", 24, TFT_WHITE);
-
-    if (DHT11_Read(&dht11)){
-      humidity = dht11.humidity;
-      temperature = dht11.temperature;
-    }
-    char ch1[32] = {0}, ch2[32] = {0};
-    sprintf(ch1, "humidity = %d", humidity);
-    sprintf(ch2, "temperature = %d", temperature);
-    TFTLCD_ShowString(0, 40, ch1, 24, TFT_CYAN);
-    TFTLCD_ShowString(0, 80, ch2, 24, TFT_CYAN);
+    PageManager_Loop();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

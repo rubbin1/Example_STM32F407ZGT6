@@ -75,7 +75,11 @@ add_executable(${CMAKE_PROJECT_NAME}
         Modules/Src/ds18b20.c
         Modules/Inc/ds18b20.h
         Modules/Inc/onewire.h
-        Modules/Src/dht11.c)
+        Modules/Src/dht11.c
+        GUI/Scr/page_manager.c
+        GUI/Inc/page_manager.h
+        Functions/Scr/app_peripheral.c
+        Functions/Inc/app_peripheral.h)
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)

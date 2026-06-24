@@ -15,8 +15,8 @@
 
 ```
 ├── Core/               # CubeMX 生成的 HAL 初始化代码
-│   ├── Inc/            # 头文件 (main.h, gpio.h, adc.h, usart.h, fsmc.h, ...)
-│   └── Src/            # 源文件 (main.c, gpio.c, adc.c, usart.c, fsmc.c, ...)
+│   ├── Inc/            # 头文件 (main.h, gpio.h, adc.h, usart.h, fsmc.h, spi.h, i2c.h, ...)
+│   └── Src/            # 源文件 (main.c, gpio.c, adc.c, usart.c, fsmc.c, spi.c, i2c.c, ...)
 ├── Drivers/            # CMSIS + STM32F4xx HAL 驱动库
 ├── Modules/            # 自定义模块封装（外设驱动层）
 │   ├── Inc/            # 模块头文件
@@ -27,6 +27,7 @@
 ├── Functions/          # 应用示例
 │   ├── Inc/            # 应用头文件
 │   └── Scr/            # 应用源文件
+├── Tools/              # 辅助工具 (字库烧录脚本等)
 ├── cmake/              # CMake 工具链文件 (含 stm32cubemx 子目录)
 ├── Docs/               # 开发板文档 (不纳入版本管理)
 ├── CMakeLists.txt      # 顶层构建文件
@@ -35,7 +36,7 @@
 
 ## 已封装模块
 
-所有模块以结构体封装外设状态，函数接收结构体指针操作。除 `hw_timer` 外，其余模块均依赖 `soft_timer` 提供定时能力。
+所有模块以结构体封装外设状态，函数接收结构体指针操作。多数模块依赖 `soft_timer` 提供定时能力，`hw_timer`、I2C、SPI 等总线层模块独立。
 
 ### SoftTimer — 软件定时器
 
@@ -134,7 +135,7 @@ if (TouchPad_IsPressed(&touch_pad)) { /* 被触摸 */ }
 
 ### Serial — 串口收发
 
-USART1 (PA9/PA10, 115200 8N1) 的中断驱动串口，带 256 字节环形接收缓冲区。
+通用串口封装，不写死 USART 外设，传入 `Serial_t` 结构体即可驱动任意 USART。中断接收 + 512 字节环形缓冲区。全局实例：`serial1` (USART1, PA9/PA10, 115200 8N1), `serial3` (USART3, PB10/PB11)。
 
 ```c
 Serial_Init(&serial1);
@@ -148,6 +149,7 @@ if (Serial_Available(&serial1)) {
 
 | 函数 | 说明 |
 |------|------|
+| `Serial_Init(s)` | 清空缓冲区，启动中断接收 |
 | `Serial_SendByte/Data/String(s, ...)` | 阻塞发送 |
 | `Serial_PrintU32(s, val)` | 打印32位无符号整数 |
 | `Serial_Println(s, str)` | 发送字符串 + 换行 |
@@ -309,28 +311,25 @@ TFTLCD_BackLight(1);                     // 背光开关
 
 `TFT_WHITE`, `TFT_BLACK`, `TFT_RED`, `TFT_GREEN`, `TFT_BLUE`, `TFT_YELLOW`, `TFT_CYAN`, `TFT_MAGENTA`, `TFT_GRAY`, `TFT_ORANGE`, `TFT_PURPLE`, `TFT_DARKBLUE`, `TFT_LIGHTBLUE`, `TFT_LIGHTGREEN`, `TFT_BROWN`
 
-### TFT Touch — 电阻触摸
+**XPT2046 触摸（已合并到 tft_lcd.h）**
 
-XPT2046 触摸控制器，软件 SPI 通信。PEN 中断检测触摸状态，5 次采样取平均，四点 Y 分段 + 线性 X 校准。全局实例：`touch`。
+XPT2046 电阻触摸控制器，软件 SPI。PEN 中断检测触摸状态，5 次采样取平均，四点 Y 分段 + 线性 X 校准。全局实例：`touch`。
 
 ```c
 Touch_Init();
-
 while (1) {
-    if (Touch_Scan()) {                  // 返回 1 表示检测到触摸
+    if (Touch_Scan()) {
         uint16_t x, y;
-        Touch_GetXY(&x, &y);             // 获取校准后的 LCD 坐标
-        // x,y 已经映射到 LCD 分辨率
+        Touch_GetXY(&x, &y);   // 已映射到 LCD 分辨率
     }
-    if (Touch_IsPressed()) { /* 正在触摸中 */ }
 }
 ```
 
 | 函数 | 说明 |
 |------|------|
 | `Touch_Init()` | 初始化，清零状态 |
-| `Touch_Scan()` | 扫描一次，返回 1=检测到新的触摸数据 |
-| `Touch_GetXY(x, y)` | 获取校准后的坐标（已映射到 LCD 分辨率） |
+| `Touch_Scan()` | 扫描，返回 1=检测到新触摸数据 |
+| `Touch_GetXY(x, y)` | 获取校准后坐标 |
 | `Touch_IsPressed()` | 当前是否正在触摸 |
 
 ### GUI — 触屏控件
@@ -397,6 +396,199 @@ Slider_Draw(&s);
 | `Slider_Check(s, tx, ty)` | 检测触摸拖动，更新 value 并回调 `on_change(value)` |
 | `Slider_SetValue(s, val)` | 外部设置值 (0~100) 并重绘 |
 
+### I2C_Bus — I2C 总线层
+
+不写死设备地址的 I2C 总线封装，支持寄存器读/写和无寄存器读/写，带设备探测功能。全局实例：`i2c1`。
+
+```c
+I2C_Bus_Init(&i2c1);
+if (I2C_Bus_Probe(&i2c1, 0x50)) { /* 设备在线 */ }
+
+uint8_t buf[8];
+I2C_Bus_MemRead(&i2c1, 0x50, 0x00, buf, 8);   // 从寄存器 0x00 起读 8 字节
+I2C_Bus_MemWrite(&i2c1, 0x50, 0x00, buf, 8);  // 从寄存器 0x00 起写 8 字节
+```
+
+| 函数 | 说明 |
+|------|------|
+| `I2C_Bus_Init(bus)` | 初始化总线 |
+| `I2C_Bus_Probe(bus, dev)` | 扫描设备，返回 0=无响应, 1=在线 |
+| `I2C_Bus_MemRead(bus, dev, reg, buf, len)` | 寄存器读（1 字节寄存器地址） |
+| `I2C_Bus_MemWrite(bus, dev, reg, buf, len)` | 寄存器写 |
+| `I2C_Bus_Read(bus, dev, buf, len)` | 无寄存器地址读 |
+| `I2C_Bus_Write(bus, dev, buf, len)` | 无寄存器地址写 |
+
+### OneWire — 单总线层
+
+Dallas OneWire 底层协议封装，不写死引脚，传入结构体即可驱动任意 GPIO。精确微秒延时（关中断），支持复位、位读写、字节读写。全局实例：`ow1`。
+
+```c
+OneWire_Init(&ow1);
+if (OneWire_Reset(&ow1)) {           // 检测设备是否存在
+    OneWire_WriteByte(&ow1, 0xCC);   // SKIP ROM
+    OneWire_WriteByte(&ow1, 0x44);   // 启动转换
+}
+```
+
+| 函数 | 说明 |
+|------|------|
+| `OneWire_Init(ow)` | 初始化 GPIO |
+| `OneWire_Reset(ow)` | 复位脉冲，返回 1=有设备应答 |
+| `OneWire_WriteBit(ow, bit)` | 写一个位 |
+| `OneWire_ReadBit(ow)` | 读一个位 |
+| `OneWire_WriteByte(ow, byte)` | 写一个字节 |
+| `OneWire_ReadByte(ow)` | 读一个字节 |
+
+### DS18B20 — 温度传感器
+
+基于 OneWire 总线的数字温度传感器，精度 12 位 (0.0625°C)。全局实例：`ds18b20` (绑定 `ow1`)。
+
+```c
+DS18B20_Init(&ds18b20);
+DS18B20_StartConvert(&ds18b20);      // 启动温度转换
+HAL_Delay(750);                       // 等待转换完成（最长 750ms）
+float t = DS18B20_ReadTemp(&ds18b20); // 读取温度 °C
+```
+
+| 函数 | 说明 |
+|------|------|
+| `DS18B20_Init(s)` | 初始化传感器 |
+| `DS18B20_StartConvert(s)` | 启动温度转换（需等待 750ms 后读取） |
+| `DS18B20_ReadTemp(s)` | 读取温度值 (°C)，返回 float |
+
+### DHT11 — 温湿度传感器
+
+自定义单总线协议的温湿度传感器，单次读取返回湿度和温度。全局实例：`dht11`。
+
+```c
+DHT11_Init(&dht11);
+if (DHT11_Read(&dht11)) {            // 返回 1=成功
+    uint8_t hum = dht11.humidity;    // 湿度 %RH
+    uint8_t tmp = dht11.temperature; // 温度 °C
+}
+```
+
+| 函数 | 说明 |
+|------|------|
+| `DHT11_Init(dht)` | 初始化 GPIO |
+| `DHT11_Read(dht)` | 读取一次，返回 1=成功，数据存入 `humidity` / `temperature` |
+
+### W25QXX — SPI Flash
+
+W25Q128 (16 MB) SPI NOR Flash 驱动。支持读 ID、任意地址读取、扇区擦除 (4 KB)、页写入 (256 B)、整片擦除、掉电/唤醒。含 SPI 读写底层。全局实例：`w25q128`。
+
+```c
+W25QXX_Init(&w25q128);
+uint16_t id = W25QXX_ReadID(&w25q128);    // 0xEF17
+
+uint8_t buf[256];
+W25QXX_Read(&w25q128, 0x000000, buf, 256);  // 读 256 字节
+
+W25QXX_EraseSector(&w25q128, 0x000000);     // 擦除扇区 0
+W25QXX_WritePage(&w25q128, 0x000000, buf, 256); // 写一页
+W25QXX_Write(&w25q128, 0x000000, buf, 1024);    // 自动跨页写入
+```
+
+| 函数 | 说明 |
+|------|------|
+| `W25QXX_Init(f)` | 初始化 SPI + CS 引脚 |
+| `W25QXX_ReadID(f)` | 读取芯片 ID (W25Q128 = 0xEF17) |
+| `W25QXX_Read(f, addr, buf, len)` | 任意地址读取 |
+| `W25QXX_EraseSector(f, addr)` | 擦除 4 KB 扇区 |
+| `W25QXX_WritePage(f, addr, buf, len)` | 页写入（≤256 字节，不可跨页） |
+| `W25QXX_Write(f, addr, buf, len)` | 自动处理跨页/擦除的写入 |
+| `W25QXX_EraseAll(f)` | 整片擦除 |
+| `W25QXX_PowerDown(f)` / `WakeUp(f)` | 掉电/唤醒 |
+
+预定义宏：`W25QXX_SECTOR_SIZE` (4096), `W25QXX_BLOCK_SIZE` (65536), `W25QXX_CAPACITY` (16 MB)
+
+### FontFlash — 中文字库
+
+从 SPI Flash 中读取 GBK 编码的中文字模并绘制到 TFT LCD。支持 16×16 和 24×24 两种字号。字库通过 Python 工具 (`Tools/gbk_font_tool.py`) 经串口烧录到 Flash。同时支持 UTF-8 字符串直接绘制（内部转为 GBK 再查表）。
+
+```c
+FontFlash_Init();
+
+// GBK 编码字符串
+uint8_t gbk_str[] = {0xBF, 0xAA, 0xCA, 0xBC, 0x00};  // "开心"
+FontFlash_ShowString16(0, 0, gbk_str, TFT_RED, TFT_BLACK);
+
+// UTF-8 字符串（自动处理中英混排）
+FontFlash_ShowString_UTF8(0, 40, "你好世界ABC", 16, TFT_WHITE);
+```
+
+| 函数 | 说明 |
+|------|------|
+| `FontFlash_Init()` | 初始化 W25QXX（由内部调用） |
+| `FontFlash_ShowChar16(x, y, hi, lo, color, bg)` | 16×16 单字绘制（GBK 编码） |
+| `FontFlash_ShowChar24(x, y, hi, lo, color, bg)` | 24×24 单字绘制 |
+| `FontFlash_ShowString16(x, y, gbk_str, color, bg)` | GBK 字符串绘制 |
+| `FontFlash_ShowString24(x, y, gbk_str, color, bg)` | GBK 字符串绘制 (24×24) |
+| `FontFlash_ShowString_UTF8(x, y, utf8_str, size, color)` | UTF-8 字符串，size≤16→16×16, size≥24→24×24 |
+| `FontFlash_RecvProc(ser)` | 串口接收字库数据（主循环中调用） |
+| `FontFlash_GetInfo(total, ok, bad)` | 获取烧录统计信息 |
+
+烧录字库流程：PC 端运行 `python Tools/gbk_font_tool.py` → 串口发送 → MCU 在主循环调用 `FontFlash_RecvProc(&serial1)` 接收写入 Flash。
+
+### Servo — 舵机驱动
+
+基于 HW_Timer (TIM6) 的软件 PWM 驱动，不占用硬件 PWM 通道。可挂任意空闲 GPIO，支持 0~180° 角度。20ms 周期 (50Hz)，脉宽 0.5~2.5ms 对应 0~180°。全局实例：`servo1`。
+
+```c
+Servo_Init(&servo1);
+Servo_SetAngle(&servo1, 90);   // 转到 90°
+
+while (1) {
+    Servo_Update(&servo1);     // 必须在主循环中高频调用，生成 PWM 波形
+}
+```
+
+| 函数 | 说明 |
+|------|------|
+| `Servo_Init(s)` | 初始化 GPIO 为推挽输出 |
+| `Servo_SetAngle(s, angle)` | 设置目标角度 0~180 |
+| `Servo_Update(s)` | 主循环中调用，位脉冲生成 PWM 波形 |
+
+> **注意**: `Servo_Update()` 用 `HwTimer_DelayUs` 阻塞产生 ±1μs 级精度的脉宽，会短暂阻塞其他任务。
+
+### Protocol — 通信协议
+
+MCU 间串口通信协议，帧格式：`SOF_H(0xAA) | SOF_L(0x55) | LEN | MSG_TYPE | FUNC_CODE | DATA[0..N] | XOR`。支持 5 种消息类型（系统、控制、查询、上报、数据透传），状态机解析，收完完整帧后回调。
+
+```c
+Protocol proto;
+Proto_Init(&proto, on_frame);             // on_frame 为完整帧回调
+
+while (1) {
+    while (Serial_Available(&serial1))
+        Proto_Feed(&proto, Serial_ReadByte(&serial1));
+}
+
+// 发送帧
+uint8_t data[] = {0x01, 0x00};           // LED0 亮, LED1 灭
+Proto_SendFrame(&serial1, MSG_CONTROL, FUNC_CTRL_LED, data, 2);
+```
+
+**消息类型**
+
+| 类型 | 值 | 说明 |
+|------|------|------|
+| `MSG_SYSTEM` | 0x00 | 系统：PING/ACK/ERROR/RESET |
+| `MSG_CONTROL` | 0x01 | 主→从：控制外设动作（LED、数码管等） |
+| `MSG_QUERY` | 0x02 | 主→从：查询/读取 |
+| `MSG_REPORT` | 0x03 | 从→主：数据上报 |
+| `MSG_DATA` | 0x04 | 双向：数据块透传 |
+
+**API**
+
+| 函数 | 说明 |
+|------|------|
+| `Proto_Init(p, cb)` | 初始化协议实例，注册帧回调 |
+| `Proto_Feed(p, byte)` | 喂入一个字节，内部状态机解析 |
+| `Proto_SendFrame(s, type, func, data, len)` | 构造并发送一帧（含 SOF/XOR） |
+
+**预定义控制结构体**：`ProtoCtrlLed` (LED0/1/2 + 流水灯间隔), `ProtoCtrlSmg` (数码管单/全图模式)
+
 ## 引脚分配
 
 | 功能 | 引脚 | 说明 |
@@ -410,5 +602,13 @@ Slider_Draw(&s);
 | KEY_UP | PA0 | 按下高电平 |
 | LIGHT_SENSOR | PF7 | 暗=高电平, 亮=低电平 |
 | TOUCH_KEY | PA5 | 电容触摸 |
-| USART1_TX | PA9 | 115200 8N1 |
-| USART1_RX | PA10 | 115200 8N1 |
+| WIRE_DQ1 | PG9 | OneWire 总线 (DS18B20 / DHT11) |
+| USART1_TX / RX | PA9 / PA10 | 串口 1 (115200 8N1) |
+| USART3_TX / RX | PB10 / PB11 | 串口 3 |
+| W25Q128_CS | PB14 | SPI Flash 片选 |
+| LCD_BL | PB15 | TFT 背光控制 |
+| T_CS / T_SCLK / T_MOSI / T_MISO / T_PEN | PC13 / PB0 / PF11 / PB2 / PB1 | XPT2046 触摸 |
+| OLED_CS / DC / RW / RD / RST | PB7 / PD6 / PA4 / PD7 / PG15 | OLED 8080 控制线 |
+| OLED_D[0:7] | PC6~9, PC11, PB6, PE5, PE6 | OLED 8080 数据线 |
+| FSMC_D[0:15] | PD14/15, PD0/1, PE7~15, PD8~10 | TFT LCD 数据线 |
+| FSMC 控制 | PD4/5/7/11/12, PE0/1 | TFT LCD FSMC (RD/WR/RS/CS) |

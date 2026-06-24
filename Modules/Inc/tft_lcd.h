@@ -35,7 +35,7 @@ typedef struct {
 extern TFTLCD_Dev tftlcd;
 
 /* ── 全局背景色（ShowString 等自动用此色填背景） ── */
-extern uint16_t tft_bg_color;    // 背景色（默认白）
+extern uint16_t tft_bg_color;
 
 void TFTLCD_SetBackColor(uint16_t bg);
 

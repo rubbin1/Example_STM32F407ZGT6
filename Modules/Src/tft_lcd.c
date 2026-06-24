@@ -592,16 +592,12 @@ uint8_t Touch_Scan(void)
 
 void Touch_GetXY(uint16_t *x, uint16_t *y)
 {
-    enum {
-        RX_MIN = 730,  RX_MAX = 3405,
-        RY0 = 3516, RY1 = 2759, RY2 = 2008, RY3 = 1253, RY4 = 1058
-    };
-    int32_t lx = (int32_t)(RX_MAX - touch.y) * (tftlcd.width - 1) / (RX_MAX - RX_MIN);
-    int32_t ly;
-    if (touch.y >= RY1)      ly = (int32_t)(RY0 - touch.y) * 120 / (RY0 - RY1);
-    else if (touch.y >= RY2) ly = 120 + (int32_t)(RY1 - touch.y) * 120 / (RY1 - RY2);
-    else if (touch.y >= RY3) ly = 240 + (int32_t)(RY2 - touch.y) * 120 / (RY2 - RY3);
-    else                     ly = 360 + (int32_t)(RY3 - touch.y) * 119 / (RY3 - RY4);
+    // XPT2046 raw ADC range typical ~200-3900, tune per board
+    enum { RAW_MIN = 200, RAW_MAX = 3900 };
+
+    int32_t lx = (int32_t)(RAW_MAX - touch.x) * (tftlcd.width - 1) / (RAW_MAX - RAW_MIN);
+    int32_t ly = (int32_t)(RAW_MAX - touch.y) * (tftlcd.height - 1) / (RAW_MAX - RAW_MIN);
+
     if (lx < 0) lx = 0; if (lx >= (int32_t)tftlcd.width)  lx = tftlcd.width - 1;
     if (ly < 0) ly = 0; if (ly >= (int32_t)tftlcd.height) ly = tftlcd.height - 1;
     *x = (uint16_t)lx;
