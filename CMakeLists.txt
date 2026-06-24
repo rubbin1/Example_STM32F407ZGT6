@@ -47,8 +47,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         Modules/Inc/touch_pad.h
         Modules/Src/serial.c
         Modules/Inc/serial.h
-        Modules/Src/adc_sensor.c
-        Modules/Inc/adc_sensor.h
+        Modules/Src/adc_dev.c
+        Modules/Inc/adc_dev.h
         Modules/Src/hw_timer.c
         Modules/Inc/hw_timer.h
         Modules/Src/oled.c
@@ -56,8 +56,6 @@ add_executable(${CMAKE_PROJECT_NAME}
         Modules/Inc/oled_font.h
         Modules/Src/tft_lcd.c
         Modules/Inc/tft_lcd.h
-        Modules/Src/tft_lcd_touch.c
-        Modules/Inc/tft_lcd_touch.h
         GUI/Scr/gui_button.c
         GUI/Inc/gui_button.h
         Functions/Scr/app_lcd.c
@@ -65,7 +63,19 @@ add_executable(${CMAKE_PROJECT_NAME}
         Modules/Src/servo_180.c
         Modules/Inc/servo_180.h
         Modules/Src/protocol.c
-        Modules/Inc/protocol.h)
+        Modules/Inc/protocol.h
+        Modules/Src/w25qxx.c
+        Modules/Inc/w25qxx.h
+        Modules/Src/font_flash.c
+        Modules/Inc/font_flash.h
+        Modules/Inc/dht11.h
+        Modules/Src/onewire.c
+        Modules/Inc/i2c_bus.h
+        Modules/Src/i2c_bus.c
+        Modules/Src/ds18b20.c
+        Modules/Inc/ds18b20.h
+        Modules/Inc/onewire.h
+        Modules/Src/dht11.c)
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)

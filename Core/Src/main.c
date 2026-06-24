@@ -19,6 +19,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "adc.h"
+#include "i2c.h"
+#include "spi.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -26,23 +28,17 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "led.h"
-#include "key_press.h"
-#include "protocol.h"
+#include <string.h>
 #include "serial.h"
+#include "w25qxx.h"
+#include "tft_lcd.h"
+#include "font_flash.h"
+#include "led.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-ProtoCtrlLed led_first = {
-  .led0 = 1, .led1 = 0, .led2 = 1,
-  .flow_ms = 0,
-};
 
-ProtoCtrlLed led_second = {
-  .led0 = 0, .led1 = 1, .led2 = 0,
-  .flow_ms = 0,
-};
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -106,30 +102,28 @@ int main(void)
   MX_TIM6_Init();
   MX_FSMC_Init();
   MX_USART3_UART_Init();
+  MX_SPI1_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   Leds_Init();
-  Led_Flow_Init(500);
-  Led_Flow_On();
+  TFTLCD_Init();
+  TFTLCD_BackLight(1);
+  TFTLCD_Clear(TFT_BLACK);
+  W25QXX_Init(&w25q128);
 
-  Serial_Init(&serial3);
+  Serial_Init(&serial1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    Led_Flow();
+    FontFlash_RecvProc(&serial1);
 
-    for (uint8_t i = 0; i < KEY_COUNT; i++){
-      Key_Scan(key_map[i]);
-    }
+    TFTLCD_ShowString(0, 30, "OK!", 16, TFT_CYAN);
+    FontFlash_ShowString_UTF8(0, 90,  "这样的说是", 16, TFT_CYAN);
+    FontFlash_ShowString_UTF8(0, 150, "这样的说是", 24,  TFT_GREEN);
 
-    if (Key_IsShortPress(&key0)){
-      Proto_SendFrame(&serial3, MSG_CONTROL, FUNC_CTRL_LED, (uint8_t*)&led_first, sizeof(led_first));
-    }
-    if (Key_IsShortPress(&key1)){
-      Proto_SendFrame(&serial3, MSG_CONTROL, FUNC_CTRL_LED, (uint8_t*)&led_second, sizeof(led_second));
-    }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

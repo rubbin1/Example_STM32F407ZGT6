@@ -2,7 +2,6 @@
 // LCD 触摸演示应用
 //
 #include "tft_lcd.h"
-#include "tft_lcd_touch.h"
 #include "gui_button.h"
 #include "led.h"
 #include <stdio.h>

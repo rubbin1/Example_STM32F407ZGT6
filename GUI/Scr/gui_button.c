@@ -5,7 +5,6 @@
 
 #include "../Inc/gui_button.h"
 #include "tft_lcd.h"
-#include "tft_lcd_touch.h"
 #include <string.h>
 
 void Button_Draw(Button *btn)

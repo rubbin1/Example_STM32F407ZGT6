@@ -91,6 +91,8 @@ void Error_Handler(void);
 #define T_MISO_GPIO_Port GPIOB
 #define T_MOSI_Pin GPIO_PIN_11
 #define T_MOSI_GPIO_Port GPIOF
+#define W25Q128_CS_Pin GPIO_PIN_14
+#define W25Q128_CS_GPIO_Port GPIOB
 #define LCD_BL_Pin GPIO_PIN_15
 #define LCD_BL_GPIO_Port GPIOB
 #define OLED_D0_Pin GPIO_PIN_6
@@ -107,6 +109,8 @@ void Error_Handler(void);
 #define OLED_DC_GPIO_Port GPIOD
 #define OLED_RD_Pin GPIO_PIN_7
 #define OLED_RD_GPIO_Port GPIOD
+#define WIRE_DQ1_Pin GPIO_PIN_9
+#define WIRE_DQ1_GPIO_Port GPIOG
 #define OLED_RST_Pin GPIO_PIN_15
 #define OLED_RST_GPIO_Port GPIOG
 #define OLED_D5_Pin GPIO_PIN_6

@@ -2,7 +2,7 @@
 // Created by 35156 on 2026/6/17.
 //
 
-#include "adc_sensor.h"
+#include "adc_dev.h"
 #include "adc.h"
 
 #define ADC_TIMEOUT_MS  10

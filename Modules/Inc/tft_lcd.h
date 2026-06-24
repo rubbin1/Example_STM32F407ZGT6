@@ -64,4 +64,16 @@ void TFTLCD_Printf(uint16_t x, uint16_t y, uint8_t size, uint16_t color, const c
 
 void TFTLCD_BackLight(uint8_t on);
 
+/* ── XPT2046 触摸 (合并 tft_lcd_touch) ── */
+typedef struct {
+    uint16_t x, y;
+    uint8_t  pressed;
+} TouchData;
+extern TouchData touch;
+
+void    Touch_Init(void);
+uint8_t Touch_Scan(void);
+void    Touch_GetXY(uint16_t *x, uint16_t *y);
+uint8_t Touch_IsPressed(void);
+
 #endif //TFTLCD_H

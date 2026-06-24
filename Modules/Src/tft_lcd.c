@@ -26,10 +26,10 @@ typedef struct {
 TFTLCD_Dev tftlcd;
 
 /* ── 全局背景色 ── */
-uint16_t tft_bg_color = TFT_BLACK;   // ST7796 反相，BLACK=白底
+uint16_t tft_bg_color;
 void TFTLCD_SetBackColor(uint16_t bg) {
-    tft_bg_color = bg;
     TFTLCD_Clear(bg);   // 全屏换背景
+    tft_bg_color = bg;
 }
 
 /* ── 底层读写 ── */
@@ -268,6 +268,7 @@ void TFTLCD_DrawPoint(uint16_t x, uint16_t y, uint16_t color)
 
 void TFTLCD_Clear(uint16_t color)
 {
+    tft_bg_color = color;
     TFTLCD_SetWindow(0, 0, tftlcd.width - 1, tftlcd.height - 1);
     for (uint32_t i = 0; i < (uint32_t)tftlcd.width * tftlcd.height; i++)
         LCD_WR_DATA(color);
@@ -526,4 +527,88 @@ void TFTLCD_Printf(uint16_t x, uint16_t y, uint8_t size, uint16_t color, const c
     vsnprintf(buf, sizeof(buf), fmt, args);
     va_end(args);
     TFTLCD_ShowString(x, y, buf, size, color);
+}
+
+/* ════════════════════════════ XPT2046 触摸 (合并 tft_lcd_touch) ════════════════════════════ */
+
+TouchData touch;
+
+/* 引脚操作 (main.h 定义的宏) */
+#define TCS_L()   HAL_GPIO_WritePin(T_CS_GPIO_Port,   T_CS_Pin,   GPIO_PIN_RESET)
+#define TCS_H()   HAL_GPIO_WritePin(T_CS_GPIO_Port,   T_CS_Pin,   GPIO_PIN_SET)
+#define TCLK_H()  HAL_GPIO_WritePin(T_SCLK_GPIO_Port, T_SCLK_Pin, GPIO_PIN_SET)
+#define TCLK_L()  HAL_GPIO_WritePin(T_SCLK_GPIO_Port, T_SCLK_Pin, GPIO_PIN_RESET)
+#define TMOSI_H() HAL_GPIO_WritePin(T_MOSI_GPIO_Port, T_MOSI_Pin, GPIO_PIN_SET)
+#define TMOSI_L() HAL_GPIO_WritePin(T_MOSI_GPIO_Port, T_MOSI_Pin, GPIO_PIN_RESET)
+#define TMISO()   HAL_GPIO_ReadPin(T_MISO_GPIO_Port,  T_MISO_Pin)
+#define TPEN()    HAL_GPIO_ReadPin(T_PEN_GPIO_Port,   T_PEN_Pin)
+
+static uint16_t tspi_read16(uint8_t cmd)
+{
+    uint16_t val = 0;
+    TCS_L();
+    for (uint8_t i = 0; i < 8; i++) {
+        if (cmd & 0x80) TMOSI_H(); else TMOSI_L();
+        TCLK_H(); TCLK_L();
+        cmd <<= 1;
+    }
+    TCLK_H(); TCLK_L();  /* busy clock */
+    for (uint8_t i = 0; i < 12; i++) {
+        TCLK_H();
+        val = (val << 1) | (TMISO() ? 1 : 0);
+        TCLK_L();
+    }
+    TCS_H();
+    return val;
+}
+
+static uint16_t tspi_read_avg(uint8_t cmd, uint8_t times)
+{
+    uint32_t sum = 0;
+    for (uint8_t i = 0; i < times; i++) sum += tspi_read16(cmd);
+    return (uint16_t)(sum / times);
+}
+
+void Touch_Init(void)
+{
+    touch.x = touch.y = 0;
+    touch.pressed = 0;
+}
+
+uint8_t Touch_Scan(void)
+{
+    if (TPEN()) { touch.pressed = 0; return 0; }
+
+    uint16_t x = tspi_read_avg(0xD0, 5);
+    uint16_t y = tspi_read_avg(0x90, 5);
+
+    if (TPEN()) { touch.pressed = 0; return 0; }
+
+    touch.x = x;
+    touch.y = y;
+    touch.pressed = 1;
+    return 1;
+}
+
+void Touch_GetXY(uint16_t *x, uint16_t *y)
+{
+    enum {
+        RX_MIN = 730,  RX_MAX = 3405,
+        RY0 = 3516, RY1 = 2759, RY2 = 2008, RY3 = 1253, RY4 = 1058
+    };
+    int32_t lx = (int32_t)(RX_MAX - touch.y) * (tftlcd.width - 1) / (RX_MAX - RX_MIN);
+    int32_t ly;
+    if (touch.y >= RY1)      ly = (int32_t)(RY0 - touch.y) * 120 / (RY0 - RY1);
+    else if (touch.y >= RY2) ly = 120 + (int32_t)(RY1 - touch.y) * 120 / (RY1 - RY2);
+    else if (touch.y >= RY3) ly = 240 + (int32_t)(RY2 - touch.y) * 120 / (RY2 - RY3);
+    else                     ly = 360 + (int32_t)(RY3 - touch.y) * 119 / (RY3 - RY4);
+    if (lx < 0) lx = 0; if (lx >= (int32_t)tftlcd.width)  lx = tftlcd.width - 1;
+    if (ly < 0) ly = 0; if (ly >= (int32_t)tftlcd.height) ly = tftlcd.height - 1;
+    *x = (uint16_t)lx;
+    *y = (uint16_t)ly;
+}
+
+uint8_t Touch_IsPressed(void)
+{
+    return touch.pressed;
 }

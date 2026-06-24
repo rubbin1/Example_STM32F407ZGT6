@@ -68,13 +68,14 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOA, KEY_UP_Pin|OLED_RW_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, T_SCLK_Pin|LCD_BL_Pin|OLED_D5_Pin|OLED_CS_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, T_SCLK_Pin|W25Q128_CS_Pin|LCD_BL_Pin|OLED_D5_Pin
+                          |OLED_CS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, OLED_DC_Pin|OLED_RD_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOG, WIRE_DQ1_Pin|OLED_RST_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : KEY2_Pin KEY1_Pin KEY0_Pin */
   GPIO_InitStruct.Pin = KEY2_Pin|KEY1_Pin|KEY0_Pin;
@@ -136,8 +137,8 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(T_MOSI_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : LCD_BL_Pin OLED_D5_Pin OLED_CS_Pin */
-  GPIO_InitStruct.Pin = LCD_BL_Pin|OLED_D5_Pin|OLED_CS_Pin;
+  /*Configure GPIO pins : W25Q128_CS_Pin LCD_BL_Pin OLED_D5_Pin OLED_CS_Pin */
+  GPIO_InitStruct.Pin = W25Q128_CS_Pin|LCD_BL_Pin|OLED_D5_Pin|OLED_CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -159,12 +160,12 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : OLED_RST_Pin */
-  GPIO_InitStruct.Pin = OLED_RST_Pin;
+  /*Configure GPIO pins : WIRE_DQ1_Pin OLED_RST_Pin */
+  GPIO_InitStruct.Pin = WIRE_DQ1_Pin|OLED_RST_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(OLED_RST_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
 }
 

@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include "stm32f4xx_hal.h"
 
-#define SERIAL_RX_BUF_SIZE 256
+#define SERIAL_RX_BUF_SIZE 512
 
 typedef struct {
     UART_HandleTypeDef *huart;
