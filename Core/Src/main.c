@@ -28,6 +28,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdio.h>
+
+#include "app_debug.h"
 #include "led.h"
 #include "tft_lcd.h"
 #include "page_manager.h"
@@ -116,6 +119,7 @@ int main(void)
   while (1)
   {
     PageManager_Loop();
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

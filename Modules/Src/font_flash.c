@@ -275,7 +275,9 @@ void FontFlash_ShowString_UTF8(uint16_t x, uint16_t y, const char *utf8_str,
 
     while (*p) {
         if (*p < 0x80) {
-            TFTLCD_ShowChar(cx, cy, *p++, size, color);
+            uint16_t ah = (size >= 12) ? 16 : 8;
+            uint16_t ay = cy + ((cw > ah) ? (cw - ah) / 2 + 1 : 0);
+            TFTLCD_ShowChar(cx, ay, *p++, size, color);
             cx += (size >= 16) ? 12 : (size >= 12) ? 12 : 6;
         } else {
             uint16_t unicode = utf8_decode(&p);

@@ -58,8 +58,6 @@ add_executable(${CMAKE_PROJECT_NAME}
         Modules/Inc/tft_lcd.h
         GUI/Scr/gui_button.c
         GUI/Inc/gui_button.h
-        Functions/Scr/app_lcd.c
-        Functions/Inc/app_lcd.h
         Modules/Src/servo_180.c
         Modules/Inc/servo_180.h
         Modules/Src/protocol.c
@@ -79,7 +77,9 @@ add_executable(${CMAKE_PROJECT_NAME}
         GUI/Scr/page_manager.c
         GUI/Inc/page_manager.h
         Functions/Scr/app_peripheral.c
-        Functions/Inc/app_peripheral.h)
+        Functions/Inc/app_peripheral.h
+        Functions/Scr/app_debug.c
+        Functions/Inc/app_debug.h)
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)

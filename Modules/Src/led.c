@@ -91,10 +91,7 @@ void Led_Flow(void)
 {
     static uint8_t current_index = 0;
 
-    if (led_flow.flag != LED_FLOWING) {
-        Led_OffAll();
-        return;
-    }
+    if (led_flow.flag != LED_FLOWING) return;
 
     if (SoftTimer_Expired(&led_flow.timer)) {
         Led_Off(led_map[current_index]);
